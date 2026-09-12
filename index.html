@@ -206,7 +206,7 @@
             </div>
         </section>
 
-        <!-- Transaction Table & Mobile Card List Section -->
+        <!-- Transaction Table Section -->
         <section class="transactions-section">
             <div class="section-header">
                 <div class="section-title">
@@ -256,15 +256,15 @@
         <i class="fa-solid fa-plus fa-lg"></i>
     </button>
 
-    <!-- Modal Welcome & Registrasi Nama Pengguna Unik -->
+    <!-- Modal Welcome & Registrasi/Login Nama Pengguna -->
     <div id="userAuthModal" class="modal-backdrop">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Selamat Datang di KeuanganKu</h3>
+                <h3 class="modal-title"><i class="fa-solid fa-user-circle" style="color: #6366f1;"></i> Selamat Datang di KeuanganKu</h3>
             </div>
             
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-                Setiap pengguna memiliki catatan keuangan dan diagram yang terpisah secara aman. Masukkan nama Anda untuk melanjutkan.
+                Setiap pengguna memiliki catatan keuangan dan grafik terpisah. Ketik nama Anda untuk mendaftar atau memulihkan data lama Anda.
             </p>
 
             <div class="auth-tabs">
@@ -298,15 +298,19 @@
             <!-- Form Login User Lama -->
             <form id="formLoginUser" class="hidden">
                 <div class="form-group full-width">
-                    <label class="form-label" for="selectExistingUser">Pilih Nama Pengguna</label>
-                    <select id="selectExistingUser" class="form-select">
-                        <!-- Populated dynamically -->
-                    </select>
+                    <label class="form-label" for="loginUsernameInput">Ketik Nama Pengguna Anda</label>
+                    <input type="text" id="loginUsernameInput" class="form-input" list="loginUserDatalist" placeholder="contoh: Budi Pratama" required>
+                    <datalist id="loginUserDatalist"></datalist>
+                </div>
+
+                <div id="loginErrorAlert" class="alert-error hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="loginErrorMsg">Nama pengguna belum terdaftar.</span>
                 </div>
 
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                        <i class="fa-solid fa-right-to-bracket"></i> Masuk Akun Saya
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Pulihkan & Masuk Akun Saya
                     </button>
                 </div>
             </form>

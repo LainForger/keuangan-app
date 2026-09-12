@@ -1,5 +1,5 @@
 /**
- * Controller Utama Aplikasi Website KeuanganKu (Mobile & Desktop Responsive)
+ * Controller Utama Aplikasi Website KeuanganKu (Dengan Pemulihan Akun Cloud)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,9 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formRegisterUser = document.getElementById('formRegisterUser');
     const formLoginUser = document.getElementById('formLoginUser');
     const regUsernameInput = document.getElementById('regUsernameInput');
-    const selectExistingUser = document.getElementById('selectExistingUser');
+    const loginUsernameInput = document.getElementById('loginUsernameInput');
+    const loginUserDatalist = document.getElementById('loginUserDatalist');
     const regErrorAlert = document.getElementById('regErrorAlert');
     const regErrorMsg = document.getElementById('regErrorMsg');
+    const loginErrorAlert = document.getElementById('loginErrorAlert');
+    const loginErrorMsg = document.getElementById('loginErrorMsg');
 
     // Metrics elements
     const metricTotalIncome = document.getElementById('metricTotalIncome');
@@ -75,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. User Authentication Check on Load
     const activeUser = UserService.getCurrentUser();
     if (!activeUser) {
-        openUserAuthModal();
+        await openUserAuthModal();
     } else {
         await initAppForUser(activeUser);
     }
@@ -112,20 +115,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ==========================================
-    // Multi-User Auth Modal Logic
+    // Multi-User Auth & Cloud Account Recovery Logic
     // ==========================================
 
-    function openUserAuthModal() {
+    async function openUserAuthModal() {
         regErrorAlert.classList.add('hidden');
+        loginErrorAlert.classList.add('hidden');
         regUsernameInput.value = '';
+        loginUsernameInput.value = '';
 
-        const users = UserService.getRegisteredUsers();
-        selectExistingUser.innerHTML = '';
+        // Ambil daftar pengguna terdaftar dari Cloud Supabase & Local
+        const users = await UserService.getAllRegisteredUsers();
+        loginUserDatalist.innerHTML = '';
         users.forEach(u => {
             const opt = document.createElement('option');
             opt.value = u;
-            opt.textContent = u;
-            selectExistingUser.appendChild(opt);
+            loginUserDatalist.appendChild(opt);
         });
 
         userAuthModal.classList.add('active');
@@ -137,6 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         formRegisterUser.classList.remove('hidden');
         formLoginUser.classList.add('hidden');
         regErrorAlert.classList.add('hidden');
+        loginErrorAlert.classList.add('hidden');
     });
 
     tabExistingUser.addEventListener('click', () => {
@@ -144,12 +150,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         tabNewUser.classList.remove('active');
         formLoginUser.classList.remove('hidden');
         formRegisterUser.classList.add('hidden');
+        regErrorAlert.classList.add('hidden');
+        loginErrorAlert.classList.add('hidden');
     });
 
+    // Handle Registrasi Nama Baru
     formRegisterUser.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = regUsernameInput.value.trim();
-
         if (!username) return;
 
         try {
@@ -163,20 +171,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Handle Login / Pemulihan Akun Lama dari Cloud Supabase
     formLoginUser.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const selectedUser = selectExistingUser.value;
-        if (selectedUser) {
-            UserService.setCurrentUser(selectedUser);
-            showToast(`Selamat datang kembali, ${selectedUser}!`, 'success');
-            await initAppForUser(selectedUser);
+        const username = loginUsernameInput.value.trim();
+        if (!username) return;
+
+        try {
+            loginErrorAlert.classList.add('hidden');
+            const loggedName = await UserService.loginExistingUser(username);
+            showToast(`Akun "${loggedName}" berhasil dipulihkan dari Supabase Cloud!`, 'success');
+            await initAppForUser(loggedName);
+        } catch (err) {
+            loginErrorMsg.textContent = err.message || 'Nama pengguna tidak ditemukan.';
+            loginErrorAlert.classList.remove('hidden');
         }
     });
 
-    btnSwitchUser.addEventListener('click', () => {
+    // Ganti Pengguna
+    btnSwitchUser.addEventListener('click', async () => {
         if (confirm('Apakah Anda ingin keluar / beralih ke pengguna lain?')) {
             UserService.clearCurrentUser();
-            openUserAuthModal();
+            await openUserAuthModal();
         }
     });
 
