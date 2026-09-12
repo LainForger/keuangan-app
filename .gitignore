@@ -1,9 +1,10 @@
-# System files
+# Sembunyikan file config berisi kunci Supabase dari GitHub
+js/config.js
+
+# System & Temp Files
 .DS_Store
 Thumbs.db
 *.log
-
-# Node modules / temp
 node_modules/
 .vscode/
 .idea/

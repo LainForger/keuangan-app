@@ -1,5 +1,5 @@
 /**
- * Modul Client Integrasi Supabase JS SDK (Multi-User Supported)
+ * Modul Client Integrasi Supabase JS SDK (Pure Static Supported)
  */
 
 let supabaseInstance = null;
@@ -48,11 +48,7 @@ const SupabaseService = {
                 .ilike('username', username)
                 .limit(1);
 
-            if (error) {
-                console.error('Error checking username:', error);
-                return false;
-            }
-
+            if (error) return false;
             return data && data.length > 0;
         } catch (e) {
             return false;
@@ -71,11 +67,7 @@ const SupabaseService = {
                 .insert([{ username }])
                 .select();
 
-            if (error) {
-                console.error('Error registering user:', error);
-                throw error;
-            }
-
+            if (error) throw error;
             return data ? data[0] : null;
         } catch (e) {
             console.error('Gagal meregistrasi user ke Supabase:', e);
@@ -98,11 +90,7 @@ const SupabaseService = {
                 .eq('username', activeUser)
                 .order('date', { ascending: false });
 
-            if (error) {
-                console.error('Supabase Error (getTransactions):', error);
-                return null;
-            }
-
+            if (error) return null;
             return data || [];
         } catch (e) {
             console.error('Gagal terhubung ke Supabase:', e);
@@ -135,11 +123,7 @@ const SupabaseService = {
                 ])
                 .select();
 
-            if (error) {
-                console.error('Supabase Error (addTransaction):', error);
-                throw error;
-            }
-
+            if (error) throw error;
             return data ? data[0] : tx;
         } catch (e) {
             console.error('Gagal menyimpan transaksi ke Supabase:', e);
@@ -167,11 +151,7 @@ const SupabaseService = {
                 .eq('id', id)
                 .select();
 
-            if (error) {
-                console.error('Supabase Error (updateTransaction):', error);
-                throw error;
-            }
-
+            if (error) throw error;
             return data ? data[0] : tx;
         } catch (e) {
             console.error('Gagal update transaksi di Supabase:', e);
@@ -191,11 +171,7 @@ const SupabaseService = {
                 .delete()
                 .eq('id', id);
 
-            if (error) {
-                console.error('Supabase Error (deleteTransaction):', error);
-                throw error;
-            }
-
+            if (error) throw error;
             return true;
         } catch (e) {
             console.error('Gagal menghapus transaksi dari Supabase:', e);
@@ -210,7 +186,7 @@ const SupabaseService = {
         try {
             if (typeof supabase === 'undefined') return false;
             const tempClient = supabase.createClient(url, anonKey);
-            const { data, error } = await tempClient.from('transactions').select('id').limit(1);
+            const { error } = await tempClient.from('transactions').select('id').limit(1);
             return !error;
         } catch (e) {
             return false;

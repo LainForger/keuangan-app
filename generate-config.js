@@ -1,16 +1,20 @@
 /**
- * Configuration Manager untuk Supabase Credentials
- * 
- * MASUKKAN SUPABASE_URL DAN SUPABASE_ANON_KEY ANDA DI BAWAH INI:
+ * Script otomatis pembuat js/config.js saat Vercel Build (100% Gratis di Vercel Hobby)
  */
 
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const fs = require('fs');
+
+const url = process.env.SUPABASE_URL || '';
+const anonKey = process.env.SUPABASE_ANON_KEY || '';
+
+const content = `/**
+ * Config file generated automatically by Vercel Build
+ */
+
+const SUPABASE_URL = "${url}";
+const SUPABASE_ANON_KEY = "${anonKey}";
 
 const ConfigManager = {
-    /**
-     * Mengambil kredensial Supabase
-     */
     getSupabaseCredentials() {
         if (SUPABASE_URL && SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY) {
             return {
@@ -43,3 +47,7 @@ const ConfigManager = {
         return Boolean(creds.url && creds.anonKey && creds.url.startsWith('https://'));
     }
 };
+`;
+
+fs.writeFileSync('./js/config.js', content);
+console.log('✅ js/config.js berhasil dibuat otomatis oleh Vercel Build!');
