@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KeuanganKu - Pelacak & Visualisasi Pengeluaran Bulanan</title>
+    <meta name="description" content="Aplikasi web modern untuk mencatat dan memvisualisasikan pengeluaran serta pemasukan bulanan dalam bentuk diagram interaktif berbasis Supabase Cloud Database.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Style System -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Supabase JS Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- Header Bar -->
+        <header class="header-bar">
+            <div class="brand-logo">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-chart-pie fa-lg"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>KeuanganKu</h1>
+                    <p>Manajemen & Visualisasi Pengeluaran Bulanan</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Active User Pill -->
+                <div id="userProfilePill" class="user-pill">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span id="activeUsernameText">Memuat...</span>
+                    <button id="btnSwitchUser" class="btn-switch-user" title="Ganti Pengguna / Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+
+                <!-- Supabase Connection Badge -->
+                <div id="supabaseStatusBadge" class="status-badge offline">
+                    <span class="status-dot"></span>
+                    <span id="supabaseStatusText">Supabase: Offline</span>
+                </div>
+
+                <button id="btnOpenAddModal" class="btn btn-primary btn-desktop-add">
+                    <i class="fa-solid fa-plus"></i> Tambah Transaksi
+                </button>
+                <button id="btnExportData" class="btn btn-outline" title="Ekspor Data JSON">
+                    <i class="fa-solid fa-download"></i> Ekspor
+                </button>
+                <label for="importFileInput" class="btn btn-outline" title="Impor Data JSON" style="cursor: pointer;">
+                    <i class="fa-solid fa-upload"></i> Impor
+                    <input type="file" id="importFileInput" accept=".json" class="hidden">
+                </label>
+                <button id="btnResetData" class="btn btn-danger-outline btn-icon" title="Reset ke Dummy Data">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Filter Bar -->
+        <section class="filter-bar">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label class="filter-label" for="filterMonth"><i class="fa-solid fa-calendar-alt"></i> Periode Bulan</label>
+                    <select id="filterMonth" class="form-select">
+                        <option value="all">Semua Bulan (Tutup Filter)</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label" for="filterCategory"><i class="fa-solid fa-tags"></i> Kategori</label>
+                    <select id="filterCategory" class="form-select">
+                        <option value="all">Semua Kategori</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label" for="filterType"><i class="fa-solid fa-list-check"></i> Jenis Transaksi</label>
+                    <select id="filterType" class="form-select">
+                        <option value="all">Semua Tipe</option>
+                        <option value="pemasukan">Pemasukan</option>
+                        <option value="pengeluaran">Pengeluaran</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <button id="btnResetFilter" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-filter-circle-xmark"></i> Reset Filter
+                </button>
+            </div>
+        </section>
+
+        <!-- Metric Summary Cards -->
+        <section class="metrics-grid">
+            <!-- Total Pemasukan -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Total Pemasukan</span>
+                    <div class="metric-icon income">
+                        <i class="fa-solid fa-arrow-down-left fa-lg"></i>
+                    </div>
+                </div>
+                <div id="metricTotalIncome" class="metric-value amount-income">Rp 0</div>
+                <div class="metric-subtitle" id="periodIncomeSub">Di periode terpilih</div>
+            </div>
+
+            <!-- Total Pengeluaran -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Total Pengeluaran</span>
+                    <div class="metric-icon expense">
+                        <i class="fa-solid fa-arrow-up-right fa-lg"></i>
+                    </div>
+                </div>
+                <div id="metricTotalExpense" class="metric-value amount-expense">Rp 0</div>
+                <div class="metric-subtitle" id="periodExpenseSub">Di periode terpilih</div>
+            </div>
+
+            <!-- Sisa Saldo / Net Balance -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Sisa Saldo (Net)</span>
+                    <div class="metric-icon balance">
+                        <i class="fa-solid fa-wallet fa-lg"></i>
+                    </div>
+                </div>
+                <div id="metricNetBalance" class="metric-value">Rp 0</div>
+                <div class="metric-subtitle" id="netStatusText">Pemasukan dikurangi Pengeluaran</div>
+            </div>
+
+            <!-- Ratio Hemat / Target Anggaran -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Rasio Tabungan & Budget</span>
+                    <div class="metric-icon rate">
+                        <i class="fa-solid fa-bullseye fa-lg"></i>
+                    </div>
+                </div>
+                <div id="metricSavingsRate" class="metric-value">0%</div>
+                <div class="budget-progress-container">
+                    <div class="metric-subtitle" id="budgetTextSub">Tingkat penghematan dana</div>
+                    <div class="budget-progress-bar">
+                        <div id="budgetProgressBarFill" class="budget-progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Visualizations Section -->
+        <section class="charts-grid">
+            <!-- Diagram Batang: Pengeluaran Bulanan -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <i class="fa-solid fa-chart-column"></i> Total Pengeluaran per Bulan
+                    </div>
+                    <span class="category-badge">Diagram Batang</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Diagram Donut: Alokasi Kategori -->
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <i class="fa-solid fa-chart-pie"></i> Alokasi Kategori Pengeluaran
+                    </div>
+                    <span class="category-badge">Diagram Donat</span>
+                </div>
+                <div class="donut-chart-wrapper">
+                    <canvas id="categoryDonutChart"></canvas>
+                    <div id="donutEmptyState" class="empty-state hidden">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <p>Tidak ada transaksi pengeluaran pada periode ini.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diagram Garis: Tren Finansial -->
+            <div class="chart-card full-width">
+                <div class="chart-card-header">
+                    <div class="chart-title">
+                        <i class="fa-solid fa-chart-line"></i> Tren Pemasukan vs Pengeluaran
+                    </div>
+                    <span class="category-badge">Grafik Tren</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendLineChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transaction Table & Mobile Card List Section -->
+        <section class="transactions-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" class="form-input" placeholder="Cari transaksi atau catatan...">
+                </div>
+            </div>
+
+            <!-- Desktop View: Table -->
+            <div class="table-responsive desktop-view-table">
+                <table class="tx-table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Judul & Catatan</th>
+                            <th>Tipe</th>
+                            <th>Kategori</th>
+                            <th style="text-align: right;">Nominal</th>
+                            <th style="text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile View: Touch Card List -->
+            <div id="mobileCardList" class="mobile-view-cards">
+                <!-- Filled dynamically for mobile users -->
+            </div>
+
+            <!-- Empty Table State -->
+            <div id="tableEmptyState" class="empty-state hidden">
+                <i class="fa-solid fa-receipt"></i>
+                <p>Belum ada catatan transaksi yang sesuai filter.</p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Floating Action Button (FAB) untuk Mobile User -->
+    <button id="mobileFabAdd" class="mobile-fab" title="Tambah Transaksi">
+        <i class="fa-solid fa-plus fa-lg"></i>
+    </button>
+
+    <!-- Modal Welcome & Registrasi Nama Pengguna Unik -->
+    <div id="userAuthModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fa-solid fa-user-plus" style="color: #6366f1;"></i> Selamat Datang di KeuanganKu</h3>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                Setiap pengguna memiliki catatan keuangan dan diagram yang terpisah secara aman. Masukkan nama Anda untuk melanjutkan.
+            </p>
+
+            <div class="auth-tabs">
+                <button type="button" id="tabNewUser" class="auth-tab active">
+                    <i class="fa-solid fa-user-plus"></i> Buat Nama Baru
+                </button>
+                <button type="button" id="tabExistingUser" class="auth-tab">
+                    <i class="fa-solid fa-user-check"></i> Masuk Pengguna Lama
+                </button>
+            </div>
+
+            <!-- Form Registrasi User Baru -->
+            <form id="formRegisterUser">
+                <div class="form-group full-width">
+                    <label class="form-label" for="regUsernameInput">Nama Pengguna Unik</label>
+                    <input type="text" id="regUsernameInput" class="form-input" placeholder="contoh: Andi Wijaya / Rina" required minlength="2">
+                </div>
+
+                <div id="regErrorAlert" class="alert-error hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="regErrorMsg">Nama pengguna sudah digunakan.</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Mulai Catat Keuangan
+                    </button>
+                </div>
+            </form>
+
+            <!-- Form Login User Lama -->
+            <form id="formLoginUser" class="hidden">
+                <div class="form-group full-width">
+                    <label class="form-label" for="selectExistingUser">Pilih Nama Pengguna</label>
+                    <select id="selectExistingUser" class="form-select">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-right-to-bracket"></i> Masuk Akun Saya
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Form Tambah / Edit Transaksi -->
+    <div id="transactionModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-title">Tambah Transaksi Baru</h3>
+                <button id="btnCloseModal" class="btn-close">&times;</button>
+            </div>
+            <form id="transactionForm">
+                <input type="hidden" id="txId" value="">
+
+                <div class="form-grid">
+                    <!-- Tipe Transaksi Switch -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Jenis Transaksi</label>
+                        <div class="type-selector">
+                            <button type="button" id="btnTypeExpense" class="type-btn active expense">
+                                <i class="fa-solid fa-minus-circle"></i> Pengeluaran
+                            </button>
+                            <button type="button" id="btnTypeIncome" class="type-btn income">
+                                <i class="fa-solid fa-plus-circle"></i> Pemasukan
+                            </button>
+                        </div>
+                        <input type="hidden" id="txType" value="pengeluaran">
+                    </div>
+
+                    <!-- Tanggal -->
+                    <div class="form-group">
+                        <label class="form-label" for="txDate">Tanggal</label>
+                        <input type="date" id="txDate" class="form-input" required>
+                    </div>
+
+                    <!-- Nominal -->
+                    <div class="form-group">
+                        <label class="form-label" for="txAmount">Nominal (Rp)</label>
+                        <input type="number" id="txAmount" class="form-input" placeholder="contoh: 50000" min="1" step="any" required>
+                    </div>
+
+                    <!-- Judul Transaksi -->
+                    <div class="form-group full-width">
+                        <label class="form-label" for="txTitle">Judul Transaksi</label>
+                        <input type="text" id="txTitle" class="form-input" placeholder="contoh: Makan Siang / Belanja Supermarket" required>
+                    </div>
+
+                    <!-- Kategori -->
+                    <div class="form-group full-width">
+                        <label class="form-label" for="txCategory">Kategori</label>
+                        <select id="txCategory" class="form-select" required>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Catatan Tambahan -->
+                    <div class="form-group full-width">
+                        <label class="form-label" for="txNote">Catatan (Opsional)</label>
+                        <input type="text" id="txNote" class="form-input" placeholder="Catatan atau rincian tambahan...">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btnCancelModal" class="btn btn-outline">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/dummyData.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/userService.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
