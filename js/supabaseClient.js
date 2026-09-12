@@ -1,5 +1,5 @@
 /**
- * Modul Client Integrasi Supabase JS SDK (Pure Static Supported)
+ * Modul Client Integrasi Supabase JS SDK (Dengan Error Tracker Detail)
  */
 
 let supabaseInstance = null;
@@ -180,16 +180,24 @@ const SupabaseService = {
     },
 
     /**
-     * Menguji koneksi dengan Supabase
+     * Menguji koneksi dengan Supabase (Kembalikan pesan error detail)
      */
     async testConnection(url, anonKey) {
         try {
-            if (typeof supabase === 'undefined') return false;
+            if (typeof supabase === 'undefined') {
+                return { success: false, message: 'Supabase JS SDK belum terload.' };
+            }
             const tempClient = supabase.createClient(url, anonKey);
-            const { error } = await tempClient.from('transactions').select('id').limit(1);
-            return !error;
+            const { data, error } = await tempClient.from('transactions').select('id').limit(1);
+            if (error) {
+                if (error.code === '42P01' || error.message.includes('does not exist')) {
+                    return { success: false, message: 'Tabel "transactions" belum dibuat di Supabase SQL Editor.' };
+                }
+                return { success: false, message: error.message || 'Kunci Anon atau URL Supabase salah.' };
+            }
+            return { success: true, message: 'Berhasil terhubung ke Supabase Cloud!' };
         } catch (e) {
-            return false;
+            return { success: false, message: e.message || 'Gagal terhubung ke URL Supabase.' };
         }
     }
 };

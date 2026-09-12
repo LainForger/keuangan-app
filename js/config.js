@@ -1,11 +1,9 @@
 /**
  * Configuration Manager untuk Supabase Credentials
- * 
- * ISIKAN URL DAN ANON KEY SUPABASE ANDA DI SINI:
  */
 
 const SUPABASE_URL = "https://ttdrrtfkhhqczgxusmli.supabase.co";
-const SUPABASE_ANON_KEY = ""; // Salin Kunci "anon public" (berawalan eyJhbG...) dari Supabase Settings API
+const SUPABASE_ANON_KEY = ""; // PASTE KUNCI "anon public" (berawalan eyJhbG...) DI DALAM TANDA PETIK INI
 
 const ConfigManager = {
     getSupabaseCredentials() {

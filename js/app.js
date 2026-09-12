@@ -1,5 +1,5 @@
 /**
- * Controller Utama Aplikasi Website KeuanganKu (Dengan Supabase Instant Connect UI)
+ * Controller Utama Aplikasi Website KeuanganKu (Dengan Error Tracker Detail)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -151,9 +151,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         showToast('Menguji koneksi ke Supabase...', 'success');
-        const isOk = await SupabaseService.testConnection(url, key);
+        const res = await SupabaseService.testConnection(url, key);
 
-        if (isOk) {
+        if (res.success) {
             ConfigManager.saveSupabaseCredentials(url, key);
             SupabaseService.init();
             await StorageManager.init();
@@ -162,9 +162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeSupabaseModal();
             await setupFilterMonthOptions();
             await refreshAppUI();
-            showToast('Berhasil terhubung ke Supabase Cloud!', 'success');
+            showToast(res.message, 'success');
         } else {
-            showToast('Gagal terhubung. Periksa URL, Key & SQL Schema.', 'error');
+            showToast(res.message, 'error');
         }
     });
 

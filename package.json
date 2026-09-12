@@ -1,8 +1,5 @@
 {
   "name": "keuanganku-app",
   "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "node generate-config.js"
-  }
+  "private": true
 }
