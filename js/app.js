@@ -1,5 +1,5 @@
 /**
- * Controller Utama Aplikasi Website KeuanganKu (Dengan Pemulihan Akun Cloud)
+ * Controller Utama Aplikasi Website KeuanganKu (Dengan Supabase Instant Connect UI)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -67,6 +67,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const txCategorySelect = document.getElementById('txCategory');
     const txNoteInput = document.getElementById('txNote');
 
+    // Supabase Modal elements
+    const supabaseModal = document.getElementById('supabaseModal');
+    const btnCloseSupabaseModal = document.getElementById('btnCloseSupabaseModal');
+    const supabaseForm = document.getElementById('supabaseForm');
+    const supabaseUrlInput = document.getElementById('supabaseUrlInput');
+    const supabaseKeyInput = document.getElementById('supabaseKeyInput');
+    const btnDisconnectSupabase = document.getElementById('btnDisconnectSupabase');
+
     // 2. State Management
     let currentFilters = {
         yearMonth: 'all',
@@ -110,9 +118,67 @@ document.addEventListener('DOMContentLoaded', async () => {
             supabaseStatusText.textContent = 'Supabase: Terhubung Cloud';
         } else {
             supabaseStatusBadge.className = 'status-badge offline';
-            supabaseStatusText.textContent = 'Supabase: LocalStorage (Offline)';
+            supabaseStatusText.textContent = 'Supabase: Offline (Klik di sini)';
         }
     }
+
+    // ==========================================
+    // Supabase Settings Modal Handlers (Instant UI Setup)
+    // ==========================================
+
+    function openSupabaseModal() {
+        const creds = ConfigManager.getSupabaseCredentials();
+        supabaseUrlInput.value = creds.url || '';
+        supabaseKeyInput.value = creds.anonKey || '';
+        supabaseModal.classList.add('active');
+    }
+
+    function closeSupabaseModal() {
+        supabaseModal.classList.remove('active');
+    }
+
+    supabaseStatusBadge.addEventListener('click', openSupabaseModal);
+    btnCloseSupabaseModal.addEventListener('click', closeSupabaseModal);
+
+    supabaseForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = supabaseUrlInput.value.trim();
+        const key = supabaseKeyInput.value.trim();
+
+        if (!url || !key) {
+            showToast('Harap isi URL dan Anon Key Supabase.', 'error');
+            return;
+        }
+
+        showToast('Menguji koneksi ke Supabase...', 'success');
+        const isOk = await SupabaseService.testConnection(url, key);
+
+        if (isOk) {
+            ConfigManager.saveSupabaseCredentials(url, key);
+            SupabaseService.init();
+            await StorageManager.init();
+
+            updateSupabaseStatusUI();
+            closeSupabaseModal();
+            await setupFilterMonthOptions();
+            await refreshAppUI();
+            showToast('Berhasil terhubung ke Supabase Cloud!', 'success');
+        } else {
+            showToast('Gagal terhubung. Periksa URL, Key & SQL Schema.', 'error');
+        }
+    });
+
+    btnDisconnectSupabase.addEventListener('click', async () => {
+        ConfigManager.clearSupabaseCredentials();
+        SupabaseService.init();
+        await StorageManager.init();
+
+        updateSupabaseStatusUI();
+        closeSupabaseModal();
+        await setupFilterMonthOptions();
+        await refreshAppUI();
+        showToast('Beralih ke mode Offline (LocalStorage)', 'success');
+    });
 
     // ==========================================
     // Multi-User Auth & Cloud Account Recovery Logic
@@ -124,7 +190,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         regUsernameInput.value = '';
         loginUsernameInput.value = '';
 
-        // Ambil daftar pengguna terdaftar dari Cloud Supabase & Local
         const users = await UserService.getAllRegisteredUsers();
         loginUserDatalist.innerHTML = '';
         users.forEach(u => {
@@ -154,7 +219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginErrorAlert.classList.add('hidden');
     });
 
-    // Handle Registrasi Nama Baru
     formRegisterUser.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = regUsernameInput.value.trim();
@@ -171,7 +235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Handle Login / Pemulihan Akun Lama dari Cloud Supabase
     formLoginUser.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = loginUsernameInput.value.trim();
@@ -188,7 +251,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Ganti Pengguna
     btnSwitchUser.addEventListener('click', async () => {
         if (confirm('Apakah Anda ingin keluar / beralih ke pengguna lain?')) {
             UserService.clearCurrentUser();
@@ -298,7 +360,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isIncome = tx.type === 'pemasukan';
             const catObj = StorageManager.getCategoryById(tx.category, tx.type);
 
-            // 1. Render Desktop Table Row
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -336,7 +397,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             transactionTableBody.appendChild(tr);
 
-            // 2. Render Mobile Card View
             const card = document.createElement('div');
             card.className = 'mobile-tx-card';
             card.innerHTML = `
@@ -374,7 +434,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             mobileCardList.appendChild(card);
         });
 
-        // Event Listener Edit & Delete Buttons
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
