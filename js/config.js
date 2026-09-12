@@ -1,7 +1,7 @@
 /**
  * Configuration Manager untuk Supabase Credentials
  * 
- * ISIKAN URL DAN ANON KEY SUPABASE ANDA DI BAWAH INI:
+ * ISIKAN URL DAN ANON KEY SUPABASE ANDA DI SINI:
  */
 
 const SUPABASE_URL = "https://ttdrrtfkhhqczgxusmli.supabase.co";

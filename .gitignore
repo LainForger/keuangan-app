@@ -1,6 +1,3 @@
-# Sembunyikan file config berisi kunci Supabase dari GitHub
-js/config.js
-
 # System & Temp Files
 .DS_Store
 Thumbs.db
