@@ -1,5 +1,5 @@
 /**
- * Controller Utama Aplikasi Website KeuanganKu (Dengan Error Tracker Detail)
+ * Controller Utama Aplikasi Website KeuanganKu
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -67,14 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const txCategorySelect = document.getElementById('txCategory');
     const txNoteInput = document.getElementById('txNote');
 
-    // Supabase Modal elements
-    const supabaseModal = document.getElementById('supabaseModal');
-    const btnCloseSupabaseModal = document.getElementById('btnCloseSupabaseModal');
-    const supabaseForm = document.getElementById('supabaseForm');
-    const supabaseUrlInput = document.getElementById('supabaseUrlInput');
-    const supabaseKeyInput = document.getElementById('supabaseKeyInput');
-    const btnDisconnectSupabase = document.getElementById('btnDisconnectSupabase');
-
     // 2. State Management
     let currentFilters = {
         yearMonth: 'all',
@@ -118,67 +110,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             supabaseStatusText.textContent = 'Supabase: Terhubung Cloud';
         } else {
             supabaseStatusBadge.className = 'status-badge offline';
-            supabaseStatusText.textContent = 'Supabase: Offline (Klik di sini)';
+            supabaseStatusText.textContent = 'Supabase: Offline (LocalStorage)';
         }
     }
-
-    // ==========================================
-    // Supabase Settings Modal Handlers (Instant UI Setup)
-    // ==========================================
-
-    function openSupabaseModal() {
-        const creds = ConfigManager.getSupabaseCredentials();
-        supabaseUrlInput.value = creds.url || '';
-        supabaseKeyInput.value = creds.anonKey || '';
-        supabaseModal.classList.add('active');
-    }
-
-    function closeSupabaseModal() {
-        supabaseModal.classList.remove('active');
-    }
-
-    supabaseStatusBadge.addEventListener('click', openSupabaseModal);
-    btnCloseSupabaseModal.addEventListener('click', closeSupabaseModal);
-
-    supabaseForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const url = supabaseUrlInput.value.trim();
-        const key = supabaseKeyInput.value.trim();
-
-        if (!url || !key) {
-            showToast('Harap isi URL dan Anon Key Supabase.', 'error');
-            return;
-        }
-
-        showToast('Menguji koneksi ke Supabase...', 'success');
-        const res = await SupabaseService.testConnection(url, key);
-
-        if (res.success) {
-            ConfigManager.saveSupabaseCredentials(url, key);
-            SupabaseService.init();
-            await StorageManager.init();
-
-            updateSupabaseStatusUI();
-            closeSupabaseModal();
-            await setupFilterMonthOptions();
-            await refreshAppUI();
-            showToast(res.message, 'success');
-        } else {
-            showToast(res.message, 'error');
-        }
-    });
-
-    btnDisconnectSupabase.addEventListener('click', async () => {
-        ConfigManager.clearSupabaseCredentials();
-        SupabaseService.init();
-        await StorageManager.init();
-
-        updateSupabaseStatusUI();
-        closeSupabaseModal();
-        await setupFilterMonthOptions();
-        await refreshAppUI();
-        showToast('Beralih ke mode Offline (LocalStorage)', 'success');
-    });
 
     // ==========================================
     // Multi-User Auth & Cloud Account Recovery Logic

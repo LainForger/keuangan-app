@@ -48,8 +48,8 @@
                     </button>
                 </div>
 
-                <!-- Supabase Connection Badge -->
-                <div id="supabaseStatusBadge" class="status-badge offline" style="cursor: pointer;" title="Klik untuk Hubungkan ke Supabase Cloud">
+                <!-- Supabase Connection Status Badge -->
+                <div id="supabaseStatusBadge" class="status-badge offline">
                     <span class="status-dot"></span>
                     <span id="supabaseStatusText">Supabase: Offline</span>
                 </div>
@@ -379,35 +379,6 @@
                     <button type="button" id="btnCancelModal" class="btn btn-outline">Batal</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Pengaturan Supabase -->
-    <div id="supabaseModal" class="modal-backdrop">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"><i class="fa-solid fa-database" style="color: #34d399;"></i> Pengaturan Supabase Database</h3>
-                <button id="btnCloseSupabaseModal" class="btn-close">&times;</button>
-            </div>
-            <form id="supabaseForm">
-                <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label class="form-label" for="supabaseUrlInput">Supabase Project URL</label>
-                        <input type="url" id="supabaseUrlInput" class="form-input" placeholder="https://xyzcompany.supabase.co" required>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label class="form-label" for="supabaseKeyInput">Supabase Anon Key</label>
-                        <input type="password" id="supabaseKeyInput" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="btnDisconnectSupabase" class="btn btn-danger-outline">Gunakan LocalStorage Only</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-plug"></i> Hubungkan ke Cloud
                     </button>
                 </div>
             </form>
