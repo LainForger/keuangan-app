@@ -1,16 +1,11 @@
 /**
  * Configuration Manager untuk Supabase Credentials
- * 
- * MASUKKAN SUPABASE_URL DAN SUPABASE_ANON_KEY ANDA DI BAWAH INI:
  */
 
 const SUPABASE_URL = "";
 const SUPABASE_ANON_KEY = "";
 
 const ConfigManager = {
-    /**
-     * Mengambil kredensial Supabase
-     */
     getSupabaseCredentials() {
         if (SUPABASE_URL && SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY) {
             return {
